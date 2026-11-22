@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Mission Rationalis – Rationale Zahlen addieren und subtrahieren</title>
+<style>
+:root{
+  --bg1:#0b1026; --bg2:#1d2170; --card:#ffffff; --ink:#1c2340; --muted:#5b6385;
+  --accent:#ff9f1c; --violet:#7c5cff; --good:#15803d; --goodbg:#dcfce7;
+  --bad:#be123c; --badbg:#ffe4e6; --info:#1d4ed8; --infobg:#dbeafe; --line:#e3e6f3;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;min-height:100vh;color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Rounded","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  background:radial-gradient(1100px 600px at 85% -10%,#4b34b5 0%,transparent 60%),linear-gradient(180deg,var(--bg1),var(--bg2));
+  background-attachment:fixed;
+}
+[hidden]{display:none!important}
+.stars-bg{position:fixed;inset:0;pointer-events:none;opacity:.7;
+  background-image:
+   radial-gradient(1.6px 1.6px at 20px 30px,#fff,transparent),
+   radial-gradient(1.2px 1.2px at 90px 120px,#cfd6ff,transparent),
+   radial-gradient(1.8px 1.8px at 160px 60px,#fff,transparent),
+   radial-gradient(1.2px 1.2px at 220px 170px,#ffe9b0,transparent),
+   radial-gradient(1.4px 1.4px at 60px 200px,#fff,transparent);
+  background-size:260px 240px;}
+.app{position:relative;max-width:980px;margin:0 auto;padding:14px 14px 40px;padding-left:max(14px,env(safe-area-inset-left));padding-right:max(14px,env(safe-area-inset-right))}
+header.top{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;color:#fff;margin-bottom:10px}
+.brand{display:flex;gap:12px;align-items:center}
+.logo{font-size:38px;line-height:1}
+h1{font-size:24px;margin:0;letter-spacing:.2px}
+.sub{margin:2px 0 0;font-size:14px;opacity:.8}
+.stats{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.pill{min-height:44px;display:inline-flex;align-items:center;gap:6px;padding:0 14px;border-radius:22px;background:rgba(255,255,255,.14);color:#fff;font-weight:700;font-size:16px}
+.ghost{min-height:44px;padding:0 14px;border-radius:22px;border:2px solid rgba(255,255,255,.35);background:transparent;color:#fff;font-size:15px;font-weight:600;cursor:pointer}
+
+.track{display:flex;gap:8px;overflow-x:auto;padding:6px 2px 10px;-webkit-overflow-scrolling:touch}
+.node{flex:1 0 108px;min-height:64px;border-radius:16px;border:2px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:13px;font-weight:700;cursor:pointer;padding:6px}
+.node .pl{font-size:26px;line-height:1}
+.node.done{background:rgba(34,197,94,.25);border-color:rgba(74,222,128,.7)}
+.node.cur{background:#fff;color:var(--ink);border-color:var(--accent);box-shadow:0 0 0 3px rgba(255,159,28,.5)}
+.node.locked{opacity:.45;cursor:not-allowed}
+
+.card{background:var(--card);border-radius:22px;padding:18px;margin-bottom:14px;box-shadow:0 10px 30px rgba(0,0,0,.28)}
+.lvl-head{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:baseline}
+.lvl-head h2{margin:0;font-size:22px}
+.lvl-head p{margin:0;color:var(--muted);font-size:15px}
+.bar{height:14px;border-radius:7px;background:var(--line);overflow:hidden;margin:12px 0 4px}
+.bar>i{display:block;height:100%;background:linear-gradient(90deg,#22c55e,#a3e635);border-radius:7px;transition:width .4s}
+.barlbl{font-size:14px;color:var(--muted)}
+.stations{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.st{min-height:48px;min-width:72px;padding:0 14px;border-radius:14px;border:2px solid var(--line);background:#f6f7ff;font-size:16px;font-weight:700;color:var(--ink);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.15}
+.st small{font-weight:600;font-size:12px;color:var(--muted)}
+.st.cur{border-color:var(--violet);background:#ece8ff}
+.st.ok{background:var(--goodbg);border-color:#86efac}
+.banner{margin-top:12px;padding:12px 14px;border-radius:16px;background:linear-gradient(90deg,#fff3d6,#ffe4a8);display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;font-weight:700}
+
+.story{font-size:19px;line-height:1.45;margin:0 0 12px}
+.story .frac{font-size:.8em}
+.tag{display:inline-block;font-size:13px;font-weight:700;color:var(--violet);background:#ece8ff;border-radius:10px;padding:3px 10px;margin-bottom:8px}
+.expr{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;justify-content:center;font-size:34px;font-weight:700;padding:16px 10px;border-radius:18px;background:#f3f4ff;border:2px dashed #c9cdf3;margin-bottom:14px}
+.expr .term{display:inline-flex;align-items:center;gap:2px;white-space:nowrap}
+.expr .op{font-size:34px;color:var(--violet)}
+.frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;line-height:1.1;margin:0 .1em;font-size:.82em}
+.frac>span:first-child{border-bottom:.09em solid currentColor;padding:0 .2em .04em}
+.frac>span:last-child{padding:.04em .2em 0}
+.ansrow{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.ansrow label{font-weight:700;font-size:18px}
+#ans{height:58px;min-width:190px;flex:1 1 190px;max-width:320px;font-size:26px;font-weight:700;padding:0 14px;border-radius:14px;border:3px solid #c9cdf3;color:var(--ink);background:#fff;-webkit-appearance:none;appearance:none}
+#ans:focus{outline:none;border-color:var(--violet);box-shadow:0 0 0 4px rgba(124,92,255,.2)}
+#ans:disabled{background:#f1f2f8}
+.unit{font-size:20px;font-weight:700;color:var(--muted);min-width:34px}
+.btn{min-height:52px;padding:0 22px;border-radius:15px;border:0;font-size:18px;font-weight:800;cursor:pointer;color:#fff;background:var(--violet);box-shadow:0 4px 0 #4c35b8}
+.btn:active{transform:translateY(2px);box-shadow:0 2px 0 #4c35b8}
+.btn.go{background:linear-gradient(#ffb43a,#ff8a00);color:#2a1700;box-shadow:0 4px 0 #c46500}
+.btn.go:active{box-shadow:0 2px 0 #c46500}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.light{background:#eef0ff;color:var(--ink);box-shadow:0 4px 0 #cdd1f3}
+.keys{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center}
+.keys button{min-height:48px;min-width:56px;padding:0 14px;border-radius:12px;border:2px solid var(--line);background:#f6f7ff;font-size:22px;font-weight:700;color:var(--ink);cursor:pointer}
+.keys span{font-size:14px;color:var(--muted);margin-left:4px}
+.fmt{font-size:14px;color:var(--muted);margin:8px 0 0}
+#feedback{margin-top:12px;border-radius:14px;padding:12px 14px;font-size:18px;line-height:1.4;font-weight:600}
+#feedback.ok{background:var(--goodbg);color:var(--good)}
+#feedback.bad{background:var(--badbg);color:var(--bad)}
+#feedback.info{background:var(--infobg);color:var(--info)}
+#feedback .frac{font-size:.85em}
+#feedback .solv{display:block;margin-top:6px;font-weight:600;color:var(--ink)}
+.shake{animation:shake .35s}
+@keyframes shake{20%{transform:translateX(-7px)}40%{transform:translateX(7px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+.helpbar{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.helpbar .btn{flex:1 1 220px;font-size:17px}
+.helpcard{margin-top:12px;border-radius:18px;padding:14px 16px;background:#fffaf0;border:2px solid #ffd58a}
+.helpcard h3{margin:0 0 8px;font-size:18px}
+.helpcard p{margin:6px 0;font-size:16px;line-height:1.4}
+.helpcard ul{margin:8px 0;padding-left:20px;font-size:17px;line-height:1.7}
+.rules{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.rules span{background:#fff;border:2px solid #ffd58a;border-radius:10px;padding:4px 10px;font-weight:800;font-size:16px}
+.simpl{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;font-size:30px;font-weight:800;padding:10px 12px;background:#fff;border-radius:14px;border:2px solid #ffd58a;margin:8px 0}
+.simpl .op{color:var(--violet)}
+.helpcard small{color:var(--muted)}
+.nav{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;justify-content:flex-end}
+#confetti span{position:fixed;top:-50px;pointer-events:none;z-index:50;animation:fall 1.9s ease-in forwards}
+@keyframes fall{to{transform:translateY(112vh) rotate(540deg);opacity:.9}}
+@media (prefers-reduced-motion:reduce){#confetti{display:none}.shake{animation:none}}
+#overlay{position:fixed;inset:0;background:rgba(8,10,35,.82);display:flex;align-items:center;justify-content:center;z-index:60;padding:16px}
+#overlay .box{background:#fff;border-radius:26px;max-width:520px;width:100%;padding:26px;text-align:center}
+#overlay .trophy{font-size:72px;line-height:1}
+#overlay h2{margin:8px 0}
+#overlay p{font-size:18px;line-height:1.5;margin:8px 0}
+#overlay .row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+@media (max-width:640px){.expr{font-size:28px}h1{font-size:21px}}
+</style>
+</head>
+<body>
+<div class="stars-bg" aria-hidden="true"></div>
+<div id="confetti" aria-hidden="true"></div>
+
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">🚀</div>
+      <div>
+        <h1>Mission Rationalis</h1>
+        <p class="sub">Addition und Subtraktion rationaler Zahlen · Klasse 7</p>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="pill" id="statStars">⭐ 0</div>
+      <div class="pill" id="statRank">Sternschnuppe</div>
+      <button class="ghost" id="btnReset" type="button">↺ Neustart</button>
+    </div>
+  </header>
+
+  <nav class="track" id="track" aria-label="Level"></nav>
+
+  <section class="card" id="levelCard">
+    <div class="lvl-head"><h2 id="lvlTitle"></h2><p id="lvlBlurb"></p></div>
+    <div class="bar"><i id="lvlBar" style="width:0%"></i></div>
+    <div class="barlbl" id="lvlLbl"></div>
+    <div class="stations" id="stations"></div>
+    <div class="banner" id="banner" hidden></div>
+  </section>
+
+  <section class="card" id="taskCard">
+    <span class="tag" id="tag"></span>
+    <p class="story" id="story"></p>
+    <div class="expr" id="expr" aria-label="Rechenaufgabe"></div>
+
+    <div class="ansrow">
+      <label for="ans">Ergebnis:</label>
+      <input id="ans" type="text" inputmode="text" enterkeyhint="done" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" placeholder="z. B. −2,5">
+      <span class="unit" id="unit"></span>
+      <button class="btn go" id="btnCheck" type="button">Prüfen ✔</button>
+    </div>
+    <div class="keys" id="keys">
+      <button type="button" data-k="−" aria-label="Minus">−</button>
+      <button type="button" data-k="," aria-label="Komma">,</button>
+      <button type="button" data-k="/" aria-label="Bruchstrich">/</button>
+      <button type="button" data-k=" " aria-label="Leerzeichen" style="font-size:15px">␣</button>
+      <button type="button" id="keyDel" aria-label="Zeichen löschen">⌫</button>
+      <span>Komma oder Punkt sind erlaubt.</span>
+    </div>
+    <p class="fmt" id="fmt"></p>
+    <div id="feedback" role="status" aria-live="polite" hidden></div>
+
+    <div class="helpbar">
+      <button class="btn light" id="btnH1" type="button">💡 Hilfe 1: Ohne Klammern</button>
+      <button class="btn light" id="btnH2" type="button">📏 Hilfe 2: Zahlengerade</button>
+    </div>
+    <div class="helpcard" id="help1" hidden></div>
+    <div class="helpcard" id="help2" hidden></div>
+
+    <div class="nav">
+      <button class="btn" id="btnNext" type="button" hidden>Nächste Aufgabe ➜</button>
+    </div>
+  </section>
+</div>
+
+<p id="seedInfo" style="text-align:center;color:rgba(255,255,255,.6);font-size:13px;margin:0 0 20px"></p>
+
+<div id="overlay" hidden>
+  <div class="box" role="dialog" aria-modal="true" aria-labelledby="ovTitle">
+    <div class="trophy">🏆</div>
+    <h2 id="ovTitle">Mission erfüllt!</h2>
+    <p id="ovText"></p>
+    <div class="row">
+      <button class="btn go" id="ovClose" type="button">Weiter üben</button>
+      <button class="btn light" id="ovReset" type="button">Neu starten</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+'use strict';
+
+/* =====================================================================
+   1  RECHENKERN (exakte Bruchrechnung, keine Gleitkomma-Fehler)
+   ===================================================================== */
+function gcd(a, b) { a = Math.abs(a); b = Math.abs(b); while (b) { var t = a % b; a = b; b = t; } return a || 1; }
+function R(n, d) { if (d === undefined) d = 1; if (d < 0) { n = -n; d = -d; } var g = gcd(n, d); return { n: n / g, d: d / g }; }
+function add(a, b) { return R(a.n * b.d + b.n * a.d, a.d * b.d); }
+function neg(a) { return { n: -a.n, d: a.d }; }
+function sub(a, b) { return add(a, neg(b)); }
+function absR(a) { return { n: Math.abs(a.n), d: a.d }; }
+function mul(a, b) { return R(a.n * b.n, a.d * b.d); }
+function eq(a, b) { return a.n === b.n && a.d === b.d; }
+function toNum(a) { return a.n / a.d; }
+
+/* Zahl aus Text lesen: -3,5 | 3.5 | −3/4 | 1 1/2 | 7 */
+function parseNumber(s) {
+  s = String(s).trim().replace(/[−–—]/g, '-');
+  var m = s.match(/^([+-]?)\s*(\d+)\s+(\d+)\s*\/\s*(\d+)$/);
+  if (m) {
+    var w = +m[2], a = +m[3], b = +m[4]; if (b === 0) return null;
+    var sg = m[1] === '-' ? -1 : 1;
+    return { r: R(sg * (w * b + a), b), kind: 'mixed', raw: { n: sg * (w * b + a), d: b } };
+  }
+  m = s.match(/^([+-]?)\s*(\d+)\s*\/\s*(\d+)$/);
+  if (m) {
+    var b2 = +m[3]; if (b2 === 0) return null;
+    var sg2 = m[1] === '-' ? -1 : 1;
+    return { r: R(sg2 * (+m[2]), b2), kind: 'frac', raw: { n: sg2 * (+m[2]), d: b2 } };
+  }
+  s = s.replace(/\s+/g, '').replace(',', '.');
+  m = s.match(/^([+-]?)(\d*)(?:\.(\d*))?$/);
+  if (m && (m[2] !== '' || (m[3] !== undefined && m[3] !== ''))) {
+    var ip = m[2] || '0', fp = m[3] || '';
+    if (fp.length > 8 || ip.length > 9) return null;
+    var den = Math.pow(10, fp.length), num = parseInt(ip + fp, 10), sg3 = m[1] === '-' ? -1 : 1;
+    return { r: R(sg3 * num, den), kind: fp.length ? 'dec' : 'int', raw: { n: sg3 * num, d: den } };
+  }
+  return null;
+}
+function splitSign(v) {
+  v = String(v).replace(/−/g, '-');
+  var ng = false;
+  if (v.charAt(0) === '-') { ng = true; v = v.slice(1); } else if (v.charAt(0) === '+') { v = v.slice(1); }
+  return { neg: ng, abs: v };
+}
+function fracHTML(n, d) { return '<span class="frac"><span>' + n + '</span><span>' + d + '</span></span>'; }
+function absHTML(a) { var m = a.match(/^(\d+)\/(\d+)$/); return m ? fracHTML(m[1], m[2]) : a.replace('.', ','); }
+function absPlain(a) { return a.replace('.', ','); }
+function isTerminating(d) { while (d % 2 === 0) d /= 2; while (d % 5 === 0) d /= 5; return d === 1; }
+function decStr(r) {
+  var ng = r.n < 0, n = Math.abs(r.n), p = 1;
+  while (p % r.d !== 0) p *= 10;
+  var k = String(p).length - 1, s = String(n * (p / r.d));
+  while (s.length <= k) s = '0' + s;
+  var ip = s.slice(0, s.length - k), fp = s.slice(s.length - k);
+  return (ng ? '−' : '') + ip + (k ? ',' + fp : '');
+}
+function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+/* =====================================================================
+   2  AUFGABEN-GENERATOREN (jede Person bekommt einen eigenen Aufgabensatz)
+   terms: [Rechenzeichen vor der Klammer, Zahl in der Klammer]
+   ===================================================================== */
+var rng = Math.random;
+function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function ri(a, b) { return a + Math.floor(rng() * (b - a + 1)); }
+function pick(arr) { return arr[Math.floor(rng() * arr.length)]; }
+function M(v) { return '−' + v; }
+function dec(n, k) { var s = String(n); while (s.length <= k) s = '0' + s; return k ? s.slice(0, s.length - k) + ',' + s.slice(s.length - k) : s; }
+function fr(b) { var a; do { a = ri(1, b - 1); } while (gcd(a, b) !== 1); return a + '/' + b; }
+function frPair(pairs) { var p = pick(pairs); if (rng() < 0.5) p = [p[1], p[0]]; return [fr(p[0]), fr(p[1])]; }
+var PAIRS_REL = [[2, 4], [3, 6], [2, 6], [4, 8], [5, 10], [3, 9], [2, 8]];
+var PAIRS_UNREL = [[3, 4], [4, 5], [5, 6], [3, 5], [2, 3], [3, 8], [2, 5], [5, 12]];
+
+var LEVELS = [
+  { name: 'Mondlandung', emoji: '🌙', need: 3, art: 'Ganze Zahlen',
+    blurb: 'Ganze Zahlen – dein Raumschiff hebt ab!',
+    gens: [
+      function () { var a = ri(3, 15), b = ri(2, 14); while (b === a) b = ri(2, 14);
+        var s = pick([
+          'Morgens zeigt das Thermometer ' + M(a) + ' °C. Bis zum Mittag steigt die Temperatur um ' + b + ' °C. Wie warm ist es mittags?',
+          'In der Tiefkühltruhe herrschen ' + M(a) + ' °C. Nach dem Abtauen steigt die Temperatur um ' + b + ' °C. Wie warm ist es dann?']);
+        return { story: s, unit: '°C', terms: [['', '-' + a], ['+', '+' + b]] }; },
+      function () { var a = ri(2, 9), b = ri(a + 1, a + 12);
+        return { story: 'Du stehst im Aufzug eines Hochhauses in Etage +' + a + ' und fährst ' + b + ' Etagen nach unten (die Tiefgarage hat negative Etagen). In welcher Etage kommst du an?',
+          unit: 'Etage', terms: [['', '+' + a], ['+', '-' + b]] }; },
+      function () { var a = ri(3, 20), b = ri(2, 9);
+        var who = pick(['Ein Taucher', 'Eine Tauchdrohne', 'Ein Forschungs-U-Boot']);
+        return { story: who + ' befindet sich auf ' + M(a) + ' m (Wasseroberfläche = 0 m). Es geht noch ' + b + ' m tiefer, also kommen ' + M(b) + ' m dazu. Auf welcher Höhe ist es danach?',
+          unit: 'm', terms: [['', '-' + a], ['+', '-' + b]] }; },
+      function () { var a = ri(3, 9), b = ri(a + 1, a + 9);
+        return { story: 'In einem Quiz hast du ' + a + ' Punkte. Eine falsche Antwort kostet ' + b + ' Punkte – du ziehst sie ab. Wie viele Punkte hast du danach?',
+          unit: 'Punkte', terms: [['', '+' + a], ['-', '+' + b]] }; }
+    ] },
+  { name: 'Mars', emoji: '🔴', need: 3, art: 'Ganze Zahlen · mehrere Summanden',
+    blurb: 'Minus vor einer negativen Zahl – jetzt wird’s spannend!',
+    gens: [
+      function () { var a = ri(10, 60), b = ri(3, Math.min(a - 2, 30));
+        return { story: 'Dein Konto steht bei ' + M(a) + ' €. Die Bank streicht eine Schuld von ' + b + ' € (' + M(b) + ' €), diese Schuld wird also abgezogen. Wie hoch ist der Kontostand danach?',
+          unit: '€', terms: [['', '-' + a], ['-', '-' + b]] }; },
+      function () { var A = ri(2, 15), B = ri(A + 2, A + 15);
+        return { story: 'Eine Höhlenforscherin steht auf ' + M(B) + ' m, eine Fledermaus hängt auf ' + M(A) + ' m. Wie viele Meter höher hängt die Fledermaus? (Höhenunterschied = obere Lage − untere Lage)',
+          unit: 'm', terms: [['', '-' + A], ['-', '-' + B]] }; },
+      function () { var a = ri(10, 25), b = ri(3, 12), c = ri(2, 9);
+        return { story: 'Du startest ein Spiel mit ' + a + ' Punkten. Eine Falle bringt dir ' + M(b) + ' Punkte. Danach wird eine Strafe von ' + M(c) + ' Punkten zurückgenommen, also abgezogen. Wie viele Punkte hast du am Ende?',
+          unit: 'Punkte', terms: [['', '+' + a], ['+', '-' + b], ['-', '-' + c]] }; },
+      function () { var a = ri(5, 20), b = ri(3, 12), c = ri(2, 9), d = ri(10, 30);
+        return { story: 'Kontostand: ' + M(a) + ' €. Es werden ' + b + ' € abgezogen, eine Lastschrift über ' + M(c) + ' € wird storniert (abgezogen) und du zahlst ' + d + ' € ein. Wie hoch ist der Kontostand zum Schluss?',
+          unit: '€', terms: [['', '-' + a], ['-', '+' + b], ['-', '-' + c], ['+', '+' + d]] }; }
+    ] },
+  { name: 'Jupiter', emoji: '🟠', need: 3, art: 'Dezimalzahlen',
+    blurb: 'Dezimalzahlen: Komma unter Komma!',
+    gens: [
+      function () { var x = ri(11, 99), y = ri(20, 99); while (x === y) y = ri(20, 99);
+        var s = pick(['Im Gefrierfach herrschen ' + M(dec(x, 1)) + ' °C. Nach dem Abtauen steigt die Temperatur um ' + dec(y, 1) + ' °C. Wie warm ist es dann?',
+          'Auf dem Balkon zeigt das Thermometer ' + M(dec(x, 1)) + ' °C. Bis zum Mittag steigt es um ' + dec(y, 1) + ' °C. Wie warm ist es dann?']);
+        return { story: s, unit: '°C', terms: [['', '-' + dec(x, 1)], ['+', '+' + dec(y, 1)]] }; },
+      function () { var x = ri(250, 999), y = ri(105, x - 50);
+        return { story: 'Du schuldest einer Freundin ' + dec(x, 2) + ' € (' + M(dec(x, 2)) + ' €). Sie erlässt dir ' + dec(y, 2) + ' € Schulden (' + M(dec(y, 2)) + ' € werden abgezogen). Wie steht es danach zwischen euch?',
+          unit: '€', terms: [['', '-' + dec(x, 2)], ['-', '-' + dec(y, 2)]] }; },
+      function () { var x = ri(500, 1500), y = ri(x + 105, x + 990);
+        return { story: 'In deiner Spardose sind ' + dec(x, 2) + ' €. Du bestellst ein Spiel für ' + dec(y, 2) + ' € und ziehst den Preis vom Guthaben ab. Wie steht dein Konto danach?',
+          unit: '€', terms: [['', '+' + dec(x, 2)], ['-', '+' + dec(y, 2)]] }; },
+      function () { var x = 5 * ri(1, 19), y = ri(10, 39), z = ri(5, 30);
+        return { story: 'Ein Pegel zeigt ' + M(dec(x, 2)) + ' m. Eine Absenkung von ' + M(dec(y, 1)) + ' m wird rückgängig gemacht (abgezogen), danach fällt der Pegel noch um ' + dec(z, 1) + ' m (' + M(dec(z, 1)) + ' m). Was zeigt der Pegel zum Schluss?',
+          unit: 'm', terms: [['', '-' + dec(x, 2)], ['-', '-' + dec(y, 1)], ['+', '-' + dec(z, 1)]] }; }
+    ] },
+  { name: 'Saturn', emoji: '🪐', need: 3, art: 'Brüche',
+    blurb: 'Brüche: erst gleichnamig machen, dann rechnen.',
+    gens: [
+      function () { var d = pick([5, 6, 7, 8, 9, 10, 12]), a = fr(d), b = fr(d); while (b === a) b = fr(d);
+        return { story: 'Ein Wasserspeicher steht bei ' + M(a) + ' m. Es laufen ' + b + ' m Wasser hinzu. Wie hoch steht das Wasser danach?',
+          unit: 'm', terms: [['', '-' + a], ['+', '+' + b]] }; },
+      function () { var p = frPair(PAIRS_REL);
+        return { story: 'Eine Tauchdrohne schwebt ' + p[0] + ' m über der Wasseroberfläche und sinkt dann um ' + p[1] + ' m (' + p[1] + ' m werden abgezogen). Auf welcher Höhe ist sie danach?',
+          unit: 'm', terms: [['', '+' + p[0]], ['-', '+' + p[1]]] }; },
+      function () { var p = frPair(PAIRS_REL);
+        return { story: 'Ein Sensor zeigt ' + M(p[0]) + ' m. Ein Messfehler von ' + M(p[1]) + ' m wird herausgerechnet (abgezogen). Welchen Wert zeigt der Sensor danach?',
+          unit: 'm', terms: [['', '-' + p[0]], ['-', '-' + p[1]]] }; },
+      function () { var d = pick([5, 7, 9, 10]), a = fr(d), b = fr(d);
+        return { story: 'Dein Medienzeit-Konto steht bei ' + M(a) + ' h (überzogen). Dann werden ' + b + ' h abgezogen. Wie steht das Konto jetzt?',
+          unit: 'h', terms: [['', '-' + a], ['-', '+' + b]] }; }
+    ] },
+  { name: 'Neptun', emoji: '🔵', need: 3, art: 'Ungleichnamige Brüche · Brüche und Dezimalzahlen',
+    blurb: 'Ungleichnamige Brüche und gemischte Schreibweisen.',
+    gens: [
+      function () { var p = frPair(PAIRS_UNREL);
+        return { story: 'Ein Regenspeicher steht bei ' + M(p[0]) + ' m (unter dem Normalstand). Es kommen ' + p[1] + ' m Wasser dazu. Wie steht der Speicher danach?',
+          unit: 'm', terms: [['', '-' + p[0]], ['+', '+' + p[1]]] }; },
+      function () { var p = frPair(PAIRS_UNREL);
+        return { story: 'Der Gipfel einer Insel liegt auf ' + p[0] + ' km, der Meeresgrund an dieser Stelle auf ' + M(p[1]) + ' km. Wie hoch ragt die Insel vom Meeresgrund bis zum Gipfel? (obere Lage − untere Lage)',
+          unit: 'km', terms: [['', '+' + p[0]], ['-', '-' + p[1]]] }; },
+      function () { var p = fr(pick([2, 4, 5, 10])), q = fr(pick([2, 4, 5])), z = pick(['0,5', '0,25', '0,75', '0,2', '0,4', '0,6', '0,3', '0,8']);
+        return { story: 'Der Wasserstand eines Schwimmbeckens liegt bei ' + M(p) + ' m (zur Sollmarke). Es werden ' + z + ' m abgelassen (abgezogen), danach ändert sich der Stand noch um ' + M(q) + ' m. Wie steht das Wasser zum Schluss?',
+          unit: 'm', terms: [['', '-' + p], ['-', '+' + z], ['+', '-' + q]] }; },
+      function () { var p = fr(pick([10, 5, 4, 2])), q = fr(pick([4, 2, 5])), z = pick(['1,25', '1,5', '0,75', '1,75', '2,25', '0,4', '0,6']);
+        return { story: 'Kontostand in Tausend Euro: ' + M(p) + '. Eine Schuld von ' + M(z) + ' wird erlassen (abgezogen), danach kommt eine Abbuchung von ' + M(q) + ' dazu. Wie lautet der Kontostand?',
+          unit: 'Tsd. €', terms: [['', '-' + p], ['-', '-' + z], ['+', '-' + q]] }; }
+    ] },
+  { name: 'Sternenkern', emoji: '⭐', need: 4, art: 'Finale · lange Rechenketten',
+    blurb: 'Das Finale: Brüche, Dezimalzahlen, viele Vorzeichen – alle 4 Aufgaben müssen sitzen!',
+    gens: [
+      function () { var D = [2, 3, 4, 6, 12], a = fr(pick(D)), b = fr(pick(D)), c = fr(pick(D)), d = fr(pick(D));
+        return { story: 'Dein Medienzeit-Konto steht bei ' + M(a) + ' h. Eine Überziehung von ' + M(b) + ' h wird erlassen (abgezogen), danach kommt eine Strafe von ' + M(c) + ' h dazu und anschließend werden ' + d + ' h abgezogen. Wie steht das Konto zum Schluss?',
+          unit: 'h', terms: [['', '-' + a], ['-', '-' + b], ['+', '-' + c], ['-', '+' + d]] }; },
+      function () { var x = pick(['1,5', '2,5', '3,5', '2,25', '3,75', '1,25']), p = fr(pick([4, 2, 8])), y = pick(['1,25', '2,75', '4,25', '3,5', '1,75', '2,25']), q = fr(pick([8, 4]));
+        return { story: 'Ein Forschungsballon startet in ' + x + ' km Höhe. Ein Abwärtsstrom von ' + M(p) + ' km wird ausgeglichen (abgezogen). Dann werden ' + y + ' km abgezogen (Sinkflug) und eine Böe bewirkt noch ' + M(q) + ' km. In welcher Höhe (zur Startmarke 0) ist der Ballon am Ende?',
+          unit: 'km', terms: [['', '+' + x], ['-', '-' + p], ['-', '+' + y], ['+', '-' + q]] }; },
+      function () { var x = pick(['0,5', '1,2', '1,5', '0,8', '2,4']), p = fr(pick([5, 2])), y = pick(['0,35', '0,25', '0,45', '0,15', '0,65']), q = fr(20);
+        return { story: 'Kontostand in Tausend Euro: ' + M(x) + '. Eine Rechnung über ' + M(p) + ' wird storniert (abgezogen), dann werden ' + y + ' abgezogen und eine Gebühr von ' + M(q) + ' fällt an. Wie lautet der Kontostand?',
+          unit: 'Tsd. €', terms: [['', '-' + x], ['-', '-' + p], ['-', '+' + y], ['+', '-' + q]] }; },
+      function () { var a = fr(pick([8, 4, 2])), z = pick(['1,5', '0,5', '0,25', '0,75', '1,25']), b = fr(pick([3, 6])), c = fr(pick([12, 6, 4])), d = fr(pick([4, 2, 8]));
+        return { story: 'Der Wasserstand im Becken liegt bei ' + M(a) + ' m. Eine Absenkung von ' + M(z) + ' m wird rückgängig gemacht (abgezogen), danach sinkt der Pegel um ' + b + ' m (' + M(b) + ' m), es werden ' + c + ' m abgelassen (abgezogen) und ' + d + ' m Regenwasser kommen hinzu. Wie steht das Wasser am Ende?',
+          unit: 'm', terms: [['', '-' + a], ['-', '-' + z], ['+', '-' + b], ['-', '+' + c], ['+', '+' + d]] }; }
+    ] }
+];
+
+/* Aufgabe vorbereiten: exakte Werte, Zwischenergebnisse, Lösung */
+function prepare(t) {
+  t.items = t.terms.map(function (tm) {
+    var p = parseNumber(tm[1]);
+    return { op: tm[0] === '-' ? -1 : 1, val: tm[1], x: p.r, raw: p.raw, kind: p.kind, sp: splitSign(tm[1]) };
+  });
+  t.hasFrac = t.items.some(function (it) { return it.kind === 'frac'; });
+  t.hasDec = t.items.some(function (it) { return it.kind === 'dec'; });
+  t.allFrac = t.items.every(function (it) { return it.kind === 'frac'; });
+  var acc = R(0); t.partials = []; t.resolved = [];
+  t.items.forEach(function (it) {
+    var s = it.op === 1 ? it.x : neg(it.x);
+    t.resolved.push(s); acc = add(acc, s); t.partials.push(acc);
+  });
+  t.answer = acc;
+}
+function acceptable(t) {
+  return t.answer.n !== 0 && t.answer.d <= 120 && Math.abs(toNum(t.answer)) <= 100;
+}
+/* Aufgabensatz zu einem Seed erzeugen (gleicher Seed = gleicher Satz) */
+function buildTasks(seed) {
+  rng = mulberry32(seed);
+  LEVELS.forEach(function (lv, li) {
+    lv.tasks = lv.gens.map(function (g, ti) {
+      var t, tries = 0;
+      do { t = g(); t.id = (li + 1) + '.' + (ti + 1); t.level = li; prepare(t); tries++; } while (!acceptable(t) && tries < 100);
+      return t;
+    });
+  });
+}
+
+/* =====================================================================
+   3  DARSTELLUNG DER AUFGABE, HILFEN
+   ===================================================================== */
+function exprHTML(t) {
+  return t.items.map(function (it, i) {
+    var inner = '<span>(</span>' + (it.sp.neg ? '−' : '+') + absHTML(it.sp.abs) + '<span>)</span>';
+    return (i === 0 ? '' : '<span class="op">' + (it.op === 1 ? '+' : '−') + '</span>') + '<span class="term">' + inner + '</span>';
+  }).join('');
+}
+function resolvedNeg(it) { return it.op === -1 ? !it.sp.neg : it.sp.neg; }
+function simplifiedHTML(t) {
+  return t.items.map(function (it, i) {
+    var ng = resolvedNeg(it), a = absHTML(it.sp.abs);
+    if (i === 0) return '<span class="term">' + (ng ? '−' : '') + a + '</span>';
+    return '<span class="op">' + (ng ? '−' : '+') + '</span><span class="term">' + a + '</span>';
+  }).join('');
+}
+function help1HTML(t) {
+  var steps = t.items.map(function (it, i) {
+    var a = absHTML(it.sp.abs), inner = (it.sp.neg ? '−' : '+') + ' ' + a, ng = resolvedNeg(it);
+    if (i === 0) {
+      return '<li>(' + inner.replace(' ', '') + ') &rarr; ' + (ng ? '−' : '') + a +
+        ' <small>(vor der ersten Klammer steht kein Rechenzeichen)</small></li>';
+    }
+    var o = it.op === 1 ? '+' : '−', s = it.sp.neg ? '−' : '+';
+    var rule = (o === s) ? ('aus ' + o + ' ' + s + ' wird +') : ('aus ' + o + ' ' + s + ' wird −');
+    return '<li>' + o + ' (' + inner.replace(' ', '') + ') &rarr; ' + (ng ? '−' : '+') + ' ' + a + ' <small>(' + rule + ')</small></li>';
+  }).join('');
+  return '<h3>💡 Hilfekarte 1: Aufgabe ohne Klammern</h3>' +
+    '<div class="rules"><span>+ + = +</span><span>− − = +</span><span>+ − = −</span><span>− + = −</span></div>' +
+    '<ul>' + steps + '</ul>' +
+    '<p>Damit lautet die Aufgabe ohne die überflüssigen Klammern:</p>' +
+    '<div class="simpl">' + simplifiedHTML(t) + '<span class="op">=</span><span>?</span></div>' +
+    '<p><small>Das Ergebnis musst du selbst ausrechnen – bei verschiedenen Vorzeichen subtrahierst du die Beträge, bei gleichen addierst du sie.</small></p>';
+}
+function help2HTML(t) {
+  var n = t.items.length, P = [], S = [], acc = 0, i;
+  for (i = 0; i < n; i++) { var s = toNum(t.resolved[i]); S.push(s); acc += s; P.push(acc); }
+  var lo = Math.min.apply(null, P.concat([0])), hi = Math.max.apply(null, P.concat([0]));
+  lo = Math.floor(lo) - 1; hi = Math.ceil(hi) + 1;
+  while (hi - lo < 7) { lo -= 1; hi += 1; }
+  var W = 680, L = 30, Rt = W - 30, span = hi - lo, nj = n - 1;
+  function sx(v) { return L + (v - lo) * (Rt - L) / span; }
+  var rowGap = 42, top = 32;
+  function rowY(k) { return top + (k - 1) * rowGap; }
+  var axisY = top + (nj - 1) * rowGap + 50, H = axisY + 66;
+  var step = span <= 24 ? 1 : (span <= 60 ? 5 : 10);
+  var g = '', k, v;
+  g += '<line x1="' + (L - 10) + '" y1="' + axisY + '" x2="' + (Rt + 10) + '" y2="' + axisY + '" stroke="#334" stroke-width="3"/>';
+  g += '<polygon points="' + (Rt + 18) + ',' + axisY + ' ' + (Rt + 6) + ',' + (axisY - 6) + ' ' + (Rt + 6) + ',' + (axisY + 6) + '" fill="#334"/>';
+  g += '<polygon points="' + (L - 18) + ',' + axisY + ' ' + (L - 6) + ',' + (axisY - 6) + ' ' + (L - 6) + ',' + (axisY + 6) + '" fill="#334"/>';
+  for (v = Math.ceil(lo / step) * step; v <= hi; v += step) {
+    var tl = v === 0 ? 12 : 7;
+    g += '<line x1="' + sx(v) + '" y1="' + (axisY - tl) + '" x2="' + sx(v) + '" y2="' + (axisY + tl) + '" stroke="#334" stroke-width="' + (v === 0 ? 3 : 2) + '"/>';
+  }
+  g += '<text x="' + sx(0) + '" y="' + (axisY + 30) + '" text-anchor="middle" font-size="17" font-weight="700" fill="#334">0</text>';
+  // gestrichelte Hilfslinien
+  for (k = 0; k < n; k++) {
+    var yTop = (k === 0) ? rowY(1) : rowY(k);
+    var last = (k === n - 1);
+    g += '<line x1="' + sx(P[k]) + '" y1="' + yTop + '" x2="' + sx(P[k]) + '" y2="' + axisY + '" stroke="' + (last ? '#7c5cff' : '#9aa0c8') + '" stroke-width="2" stroke-dasharray="' + (last ? '3 5' : '2 6') + '"/>';
+  }
+  // Sprünge
+  for (k = 1; k <= nj; k++) {
+    var x1 = sx(P[k - 1]), x2 = sx(P[k]), y = rowY(k), dir = x2 >= x1 ? 1 : -1;
+    var col = dir > 0 ? '#15803d' : '#be123c';
+    var ab = absPlain(t.items[k].sp.abs), sgn = S[k] >= 0 ? '+' : '−';
+    g += '<line x1="' + x1 + '" y1="' + y + '" x2="' + (x2 - dir * 8) + '" y2="' + y + '" stroke="' + col + '" stroke-width="5" stroke-linecap="round"/>';
+    g += '<polygon points="' + x2 + ',' + y + ' ' + (x2 - dir * 14) + ',' + (y - 8) + ' ' + (x2 - dir * 14) + ',' + (y + 8) + '" fill="' + col + '"/>';
+    g += '<circle cx="' + x1 + '" cy="' + y + '" r="5" fill="' + col + '"/>';
+    g += '<text x="' + ((x1 + x2) / 2) + '" y="' + (y - 11) + '" text-anchor="middle" font-size="18" font-weight="800" fill="' + col + '" stroke="#fffaf0" stroke-width="5" paint-order="stroke">' + sgn + ab + '</text>';
+  }
+  // Start und Ziel
+  var st = t.items[0], stTxt = (st.sp.neg ? '−' : '') + absPlain(st.sp.abs);
+  g += '<circle cx="' + sx(P[0]) + '" cy="' + axisY + '" r="8" fill="#7c5cff"/>';
+  g += '<text x="' + sx(P[0]) + '" y="' + (axisY + 52) + '" text-anchor="middle" font-size="17" font-weight="800" fill="#4c35b8">Start: ' + stTxt + '</text>';
+  g += '<circle cx="' + sx(P[n - 1]) + '" cy="' + axisY + '" r="14" fill="#fffaf0" stroke="#7c5cff" stroke-width="3" stroke-dasharray="4 3"/>';
+  g += '<text x="' + sx(P[n - 1]) + '" y="' + (axisY + 7) + '" text-anchor="middle" font-size="20" font-weight="800" fill="#7c5cff">?</text>';
+  var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:auto;display:block" role="img" aria-label="Zahlengerade mit den Sprüngen der Aufgabe">' + g + '</svg>';
+  return '<h3>📏 Hilfekarte 2: Die Aufgabe an der Zahlengeraden</h3>' + svg +
+    '<p>Starte bei <b>' + stTxt + '</b>. Jeder Pfeil ist ein Sprung: <b style="color:#15803d">grün = nach rechts (+)</b>, <b style="color:#be123c">rot = nach links (−)</b>. ' +
+    'Die Länge des Pfeils ist der Betrag der Zahl.</p>' +
+    '<p><small>Ein Strich auf der Geraden entspricht ' + step + (step === 1 ? ' Einheit' : ' Einheiten') + '. Wo du bei „?“ landest, musst du selbst herausfinden.</small></p>';
+}
+function resultHTML(t) {
+  var r = t.answer;
+  if (r.d === 1) return (r.n < 0 ? '−' : '') + Math.abs(r.n);
+  var parts = [], sg = r.n < 0 ? '−' : '', an = Math.abs(r.n);
+  if (t.hasFrac) {
+    parts.push(sg + fracHTML(an, r.d));
+    if (an > r.d) parts.push(sg + Math.floor(an / r.d) + fracHTML(an % r.d, r.d));
+  }
+  if (isTerminating(r.d)) parts.push(decStr(r));
+  return parts.join(' = ');
+}
+
+/* =====================================================================
+   4  FEHLERDIAGNOSE
+   ===================================================================== */
+function termPlain(it) {
+  return (it.op === 1 ? '+' : '−') + ' (' + (it.sp.neg ? '−' : '+') + absPlain(it.sp.abs) + ')';
+}
+function diagnose(t, e) {
+  var ans = t.answer, items = t.items, n = items.length, c = [], i;
+  function push(v, kind, msg) { c.push({ v: v, kind: kind, msg: msg }); }
+  if (ans.n !== 0) push(neg(ans), 'vorzeichen', 'Dein Betrag stimmt, aber das <b>Vorzeichen des Ergebnisses</b> nicht. Überlege: Welche der Zahlen hat den größeren Betrag? Ihr Vorzeichen bekommt das Ergebnis.');
+  var A = items[0].x;
+  for (i = 1; i < n; i++) A = add(A, items[i].op === 1 ? absR(items[i].x) : neg(absR(items[i].x)));
+  push(A, 'klammer', 'Du hast <b>das Vorzeichen in den Klammern nicht beachtet</b>. Denk an die Regeln: − (−a) wird + a, und + (−a) wird − a.');
+  var B = R(0); items.forEach(function (it) { B = add(B, it.x); });
+  push(B, 'rechenzeichen', 'Du hast das <b>Rechenzeichen vor der Klammer übersehen</b>. Bei − (…) wird nicht addiert, sondern subtrahiert – das Vorzeichen in der Klammer dreht sich um.');
+  items.forEach(function (it, k) {
+    var s2 = R(t.resolved[k].n * 2, t.resolved[k].d);
+    var msg = k === 0 ? 'Prüfe das <b>Vorzeichen der ersten Zahl</b> noch einmal.'
+      : 'Bei der <b>' + (k + 1) + '. Klammer (' + termPlain(it) + ')</b> ist beim Auflösen ein Vorzeichen falsch gesetzt. Schau dir die Klammerregeln dafür noch einmal an.';
+    push(sub(ans, s2), 'einzelnes-vorzeichen', msg);
+  });
+  if (t.hasFrac && ans.n !== 0) push(R(ans.d, ans.n), 'zaehler-nenner', '<b>Zähler und Nenner vertauscht!</b> Der Zähler steht oben, der Nenner unten.');
+  if (t.allFrac) {
+    var an = t.resolved[0].n === 0 ? 0 : (items[0].op * items[0].raw.n), ad = items[0].raw.d;
+    for (i = 1; i < n; i++) { an += items[i].op * items[i].raw.n; ad += items[i].raw.d; }
+    push(R(an, ad), 'nenner-addiert', 'Beim Addieren und Subtrahieren von Brüchen werden <b>die Nenner nicht mitgerechnet</b>. Erst gleichnamig machen (Hauptnenner), dann nur die Zähler verrechnen.');
+  }
+  if (ans.n !== 0) {
+    push(mul(ans, R(10)), 'komma', 'Das <b>Komma sitzt an der falschen Stelle</b>. Schreibe Dezimalzahlen stellengerecht untereinander: Komma unter Komma.');
+    push(mul(ans, R(1, 10)), 'komma', 'Das <b>Komma sitzt an der falschen Stelle</b>. Schreibe Dezimalzahlen stellengerecht untereinander: Komma unter Komma.');
+  }
+  var D = R(0); t.resolved.forEach(function (s) { D = add(D, absR(s)); });
+  push(D, 'betraege', 'Du hast <b>alle Beträge einfach zusammengezählt</b>. Haben Zahlen verschiedene Vorzeichen, musst du ihre Beträge subtrahieren.');
+  push(neg(D), 'betraege', 'Du hast <b>alle Beträge einfach zusammengezählt</b> und ein Minus davorgesetzt. Haben Zahlen verschiedene Vorzeichen, musst du ihre Beträge subtrahieren.');
+  for (i = 0; i < n - 1; i++) push(t.partials[i], 'zwischenergebnis', 'Das ist erst ein <b>Zwischenergebnis</b> – es sind noch weitere Zahlen zu verrechnen.');
+  for (i = 0; i < c.length; i++) { if (eq(e, c[i].v) && !eq(c[i].v, ans)) return { kind: c[i].kind, msg: c[i].msg }; }
+  if (!isTerminating(ans.d) && Math.abs(toNum(e) - toNum(ans)) < 0.01) {
+    return { kind: 'gerundet', msg: 'Das ist nur <b>gerundet</b>. Gib das Ergebnis genau als Bruch an, z. B. 17/12 oder 1 5/12.' };
+  }
+  return { kind: 'allgemein', msg: 'Das stimmt noch nicht. Löse zuerst die Klammern auf und rechne dann Schritt für Schritt – die Hilfekarten helfen dir dabei.' };
+}
+
+/* =====================================================================
+   5  OBERFLÄCHE
+   ===================================================================== */
+var RANKS = [[0, 'Sternschnuppe'], [8, 'Komet'], [18, 'Satellit'], [30, 'Raumsonde'], [44, 'Sternenflotte'], [60, 'Galaxie-Genie']];
+var KEY = 'mission-rationalis-v2';
+
+function initUI() {
+  var $ = function (id) { return document.getElementById(id); };
+  function newSeed() { return ((Date.now() ^ Math.floor(Math.random() * 4294967296)) >>> 0) || 1; }
+  var state = { unlocked: 0, cur: 0, solved: {}, finished: false, seed: 0 };
+  try {
+    var raw = sessionStorage.getItem(KEY);
+    if (raw) {
+      var o = JSON.parse(raw);
+      if (o && typeof o === 'object' && o.solved && o.seed) {
+        state.unlocked = Math.min(LEVELS.length - 1, Math.max(0, o.unlocked | 0));
+        state.cur = Math.min(state.unlocked, Math.max(0, o.cur | 0));
+        state.solved = o.solved; state.finished = !!o.finished; state.seed = o.seed >>> 0;
+      }
+    }
+  } catch (e) { }
+  var hm = /seed=(\d{1,10})/.exec(location.hash || '');
+  if (hm && (state.seed !== (+hm[1] >>> 0))) { state = { unlocked: 0, cur: 0, solved: {}, finished: false, seed: (+hm[1] >>> 0) || 1 }; }
+  if (!state.seed) state.seed = newSeed();
+  buildTasks(state.seed);
+  function save() { try { sessionStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { } }
+
+  var sess = { ti: 0, wrong: {}, hint: {}, open1: false, open2: false };
+
+  function curLevel() { return LEVELS[state.cur]; }
+  function curTask() { return curLevel().tasks[sess.ti]; }
+  function isSolved(t) { return !!state.solved[t.id]; }
+  function solvedCount(li) { return LEVELS[li].tasks.filter(isSolved).length; }
+  function levelDone(li) { return solvedCount(li) >= LEVELS[li].need; }
+  function totalStars() { var s = 0; for (var k in state.solved) { if (state.solved.hasOwnProperty(k)) s += state.solved[k]; } return s; }
+  function rankName() { var s = totalStars(), r = RANKS[0][1]; RANKS.forEach(function (x) { if (s >= x[0]) r = x[1]; }); return r; }
+  function starStr(n) { return '★★★'.slice(0, n) + '☆☆☆'.slice(0, 3 - n); }
+  function firstUnsolved(li) {
+    var ts = LEVELS[li].tasks;
+    for (var i = 0; i < ts.length; i++) if (!isSolved(ts[i])) return i;
+    return 0;
+  }
+  function storyHTML(s) { return esc(s).replace(/(\d+)\/(\d+)/g, function (m, a, b) { return fracHTML(a, b); }); }
+
+  function setFb(kind, html) {
+    var f = $('feedback');
+    if (!kind) { f.hidden = true; f.innerHTML = ''; f.className = ''; return; }
+    f.hidden = false; f.className = kind; f.innerHTML = html;
+  }
+  function burst() {
+    var host = $('confetti'), em = ['⭐', '✨', '🎉', '🚀', '🪐', '🌟'];
+    for (var i = 0; i < 18; i++) {
+      (function () {
+        var s = document.createElement('span');
+        s.textContent = em[Math.floor(Math.random() * em.length)];
+        s.style.left = (5 + Math.random() * 90) + 'vw';
+        s.style.animationDelay = (Math.random() * 0.4) + 's';
+        s.style.fontSize = (20 + Math.random() * 20) + 'px';
+        host.appendChild(s);
+        setTimeout(function () { if (s.parentNode) s.parentNode.removeChild(s); }, 2600);
+      })();
+    }
+  }
+
+  function renderHeader() {
+    $('statStars').textContent = '⭐ ' + totalStars() + ' / ' + (LEVELS.reduce(function (a, l) { return a + l.tasks.length; }, 0) * 3);
+    $('statRank').textContent = '🎖 ' + rankName();
+    $('seedInfo').textContent = 'Aufgabensatz Nr. ' + state.seed;
+  }
+  function renderTrack() {
+    var tr = $('track'); tr.innerHTML = '';
+    LEVELS.forEach(function (lv, i) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      var locked = i > state.unlocked;
+      b.className = 'node' + (i === state.cur ? ' cur' : '') + (levelDone(i) ? ' done' : '') + (locked ? ' locked' : '');
+      b.innerHTML = '<span class="pl">' + (locked ? '🔒' : lv.emoji) + '</span><span>Level ' + (i + 1) + '</span><span>' + lv.name + '</span>';
+      b.setAttribute('aria-label', 'Level ' + (i + 1) + ' ' + lv.name + (locked ? ' (gesperrt)' : ''));
+      b.addEventListener('click', function () {
+        if (locked) return;
+        state.cur = i; save(); gotoTask(firstUnsolved(i));
+      });
+      tr.appendChild(b);
+    });
+  }
+  function renderLevel() {
+    var lv = curLevel(), li = state.cur, sc = solvedCount(li);
+    $('lvlTitle').textContent = lv.emoji + ' Level ' + (li + 1) + ': ' + lv.name;
+    $('lvlBlurb').textContent = lv.blurb;
+    $('lvlBar').style.width = Math.min(100, Math.round(sc / lv.need * 100)) + '%';
+    $('lvlLbl').textContent = sc + ' von ' + lv.need + ' nötigen Aufgaben gelöst' + (lv.need < lv.tasks.length ? ' (die 4. ist eine Bonusaufgabe)' : ' (alle müssen gelöst werden)');
+    var st = $('stations'); st.innerHTML = '';
+    lv.tasks.forEach(function (t, i) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'st' + (i === sess.ti ? ' cur' : '') + (isSolved(t) ? ' ok' : '');
+      var bonus = i >= lv.need;
+      b.innerHTML = 'Aufgabe ' + (i + 1) + '<small>' + (isSolved(t) ? starStr(state.solved[t.id]) : (bonus ? 'Bonus' : 'offen')) + '</small>';
+      b.addEventListener('click', function () { gotoTask(i); });
+      st.appendChild(b);
+    });
+    var bn = $('banner');
+    if (levelDone(li)) {
+      bn.hidden = false;
+      if (li < LEVELS.length - 1) {
+        bn.innerHTML = '<span>🎉 Level geschafft! Der nächste Planet ist freigeschaltet.</span>';
+        var nb = document.createElement('button');
+        nb.type = 'button'; nb.className = 'btn go';
+        nb.textContent = 'Weiter zu Level ' + (li + 2) + ' ➜';
+        nb.addEventListener('click', function () { state.cur = li + 1; save(); gotoTask(firstUnsolved(li + 1)); });
+        bn.appendChild(nb);
+      } else {
+        bn.innerHTML = '<span>🏆 Du hast den Sternenkern erreicht – Mission erfüllt!</span>';
+      }
+    } else { bn.hidden = true; }
+  }
+  function renderTask() {
+    var lv = curLevel(), t = curTask(), solved = isSolved(t);
+    $('tag').textContent = 'Aufgabe ' + t.id + ' · ' + lv.art;
+    $('story').innerHTML = storyHTML(t.story);
+    $('expr').innerHTML = exprHTML(t);
+    $('unit').textContent = t.unit;
+    $('fmt').textContent = t.hasFrac
+      ? 'Gib das Ergebnis als Bruch (z. B. −3/4 oder 1 1/2) oder als Dezimalzahl an.'
+      : 'Gib das Ergebnis als Zahl an (Komma oder Punkt, z. B. −2,5).';
+    var inp = $('ans');
+    inp.disabled = solved; $('btnCheck').disabled = solved;
+    Array.prototype.forEach.call($('keys').querySelectorAll('button'), function (b) { b.disabled = solved; });
+    if (solved) {
+      inp.value = '';
+      inp.placeholder = 'gelöst ✔';
+      setFb('ok', '✅ Gelöst: ' + starStr(state.solved[t.id]) + '<span class="solv">Lösungsweg: ' + simplifiedHTML(t) + ' = ' + resultHTML(t) + ' ' + esc(t.unit) + '</span>');
+    } else { inp.placeholder = 'z. B. −2,5'; }
+    $('help1').hidden = !sess.open1; $('help2').hidden = !sess.open2;
+    if (sess.open1) $('help1').innerHTML = help1HTML(t);
+    if (sess.open2) $('help2').innerHTML = help2HTML(t);
+    var nb = $('btnNext');
+    var nextIdx = nextUnsolvedIndex();
+    nb.hidden = !(solved && nextIdx !== -1);
+  }
+  function nextUnsolvedIndex() {
+    var ts = curLevel().tasks, n = ts.length;
+    for (var d = 1; d < n; d++) { var i = (sess.ti + d) % n; if (!isSolved(ts[i])) return i; }
+    return -1;
+  }
+  function render() { renderHeader(); renderTrack(); renderLevel(); renderTask(); }
+  function gotoTask(i) {
+    sess.ti = i; sess.open1 = false; sess.open2 = false;
+    $('ans').value = '';
+    if (!isSolved(curTask())) setFb(null);
+    render();
+    window.scrollTo(0, 0);
+  }
+
+  function onCheck() {
+    var t = curTask();
+    if (isSolved(t)) return;
+    var p = parseNumber($('ans').value);
+    if (!p) { setFb('info', 'ℹ️ Bitte gib eine Zahl ein – mit Komma oder Punkt, z. B. −2,5 oder 3/4.'); return; }
+    if (eq(p.r, t.answer)) {
+      var wrong = sess.wrong[t.id] || 0, hint = sess.hint[t.id] ? 1 : 0;
+      var stars = Math.max(1, 3 - wrong - hint);
+      state.solved[t.id] = stars;
+      var li = state.cur, wasDone = false;
+      var note = '';
+      if (p.kind === 'frac' && p.raw.d !== p.r.d) note = '<span class="solv">Tipp: Der Wert stimmt. Kürze den Bruch noch vollständig auf ' + p.r.n + '/' + p.r.d + '.</span>';
+      if (levelDone(li) && li < LEVELS.length - 1) state.unlocked = Math.max(state.unlocked, li + 1);
+      var fin = false;
+      if (li === LEVELS.length - 1 && levelDone(li) && !state.finished) { state.finished = true; fin = true; }
+      save();
+      render();
+      setFb('ok', '🎉 Richtig! ' + starStr(stars) + '<span class="solv">Lösungsweg: ' + simplifiedHTML(t) + ' = ' + resultHTML(t) + ' ' + esc(t.unit) + '</span>' + note);
+      burst();
+      if (fin) setTimeout(showFinale, 900);
+    } else {
+      sess.wrong[t.id] = (sess.wrong[t.id] || 0) + 1;
+      var d = diagnose(t, p.r);
+      var extra = (sess.wrong[t.id] >= 2 && !sess.open1) ? '<span class="solv">💡 Tipp: Öffne „Hilfe 1“, um die Klammern aufzulösen.</span>' : '';
+      setFb('bad', '🔎 ' + d.msg + extra);
+      var c = $('taskCard'); c.classList.remove('shake'); void c.offsetWidth; c.classList.add('shake');
+    }
+  }
+  function showFinale() {
+    var all = [], first = 0;
+    LEVELS.forEach(function (l) { l.tasks.forEach(function (t) { if (state.solved[t.id]) { all.push(t); if (state.solved[t.id] === 3) first++; } }); });
+    $('ovText').innerHTML = 'Du hast den Sternenkern erreicht und alle Planeten gemeistert.<br><b>' + totalStars() + ' Sterne</b> · Rang: <b>' + rankName() + '</b><br>' +
+      first + ' Aufgaben hast du auf Anhieb und ohne Hilfe gelöst.';
+    $('overlay').hidden = false;
+  }
+
+  /* Ereignisse */
+  $('btnCheck').addEventListener('click', onCheck);
+  $('ans').addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.keyCode === 13) { e.preventDefault(); onCheck(); } });
+  Array.prototype.forEach.call($('keys').querySelectorAll('button[data-k]'), function (b) {
+    b.addEventListener('click', function () {
+      var el = $('ans'), ch = b.getAttribute('data-k'), s = el.selectionStart, e2 = el.selectionEnd;
+      if (typeof s !== 'number') { el.value += ch; } else {
+        el.value = el.value.slice(0, s) + ch + el.value.slice(e2);
+        el.selectionStart = el.selectionEnd = s + ch.length;
+      }
+      try { el.focus({ preventScroll: true }); } catch (x) { el.focus(); }
+    });
+  });
+  $('keyDel').addEventListener('click', function () {
+    var el = $('ans'), s = el.selectionStart, e2 = el.selectionEnd;
+    if (typeof s !== 'number') { el.value = el.value.slice(0, -1); return; }
+    if (s !== e2) { el.value = el.value.slice(0, s) + el.value.slice(e2); el.selectionStart = el.selectionEnd = s; }
+    else if (s > 0) { el.value = el.value.slice(0, s - 1) + el.value.slice(s); el.selectionStart = el.selectionEnd = s - 1; }
+    try { el.focus({ preventScroll: true }); } catch (x) { el.focus(); }
+  });
+  $('btnH1').addEventListener('click', function () {
+    sess.open1 = !sess.open1;
+    if (sess.open1 && !isSolved(curTask())) sess.hint[curTask().id] = true;
+    renderTask();
+  });
+  $('btnH2').addEventListener('click', function () {
+    sess.open2 = !sess.open2;
+    if (sess.open2 && !isSolved(curTask())) sess.hint[curTask().id] = true;
+    renderTask();
+  });
+  $('btnNext').addEventListener('click', function () { var i = nextUnsolvedIndex(); if (i !== -1) gotoTask(i); });
+  $('ovClose').addEventListener('click', function () { $('overlay').hidden = true; });
+
+  function doReset() {
+    state = { unlocked: 0, cur: 0, solved: {}, finished: false, seed: newSeed() };
+    buildTasks(state.seed);
+    sess = { ti: 0, wrong: {}, hint: {}, open1: false, open2: false };
+    save(); $('overlay').hidden = true; setFb(null); $('ans').value = ''; render(); window.scrollTo(0, 0);
+  }
+  var armed = false, armTimer = null;
+  $('btnReset').addEventListener('click', function () {
+    var b = $('btnReset');
+    if (!armed) {
+      armed = true; b.textContent = 'Wirklich löschen? Nochmal tippen';
+      armTimer = setTimeout(function () { armed = false; b.textContent = '↺ Neustart'; }, 3500);
+    } else { clearTimeout(armTimer); armed = false; b.textContent = '↺ Neustart'; doReset(); }
+  });
+  $('ovReset').addEventListener('click', doReset);
+
+  sess.ti = firstUnsolved(state.cur);
+  render();
+}
+
+/* Export für Tests (Node) bzw. Start im Browser */
+var API = { buildTasks: buildTasks, LEVELS: LEVELS, parseNumber: parseNumber, diagnose: diagnose, eq: eq, resultHTML: resultHTML, decStr: decStr, help1HTML: help1HTML, help2HTML: help2HTML, exprHTML: exprHTML, simplifiedHTML: simplifiedHTML, toNum: toNum };
+if (typeof module !== 'undefined' && module.exports) { module.exports = API; }
+if (typeof document !== 'undefined') {
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initUI); else initUI();
+}
+})();
+</script>
+</body>
+</html>
